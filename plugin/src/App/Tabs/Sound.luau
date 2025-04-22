@@ -68,7 +68,7 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
         element.instance.TextLabel.Text = `({placeId}) {(productInfo :: any).Name}`
 	end)
 	placeInput:AddTip(ui:CreateTip(
-		"Reuploading audio needs a place id. Public games are found automatically."
+		"Reuploading needs a place id. Public games under the creator are found automatically."
 	))
 
     local textBox = placeInput.instance.TextBox
