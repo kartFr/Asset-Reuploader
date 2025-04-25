@@ -1,16 +1,18 @@
 package retry
 
+import "time"
+
 type retryOptions struct {
-	MaxTries int
-	Delay    float64
-	MaxDelay float64
-	BackOff  float64
+	Tries    int
+	Delay    time.Duration
+	MaxDelay time.Duration
+	BackOff  time.Duration
 }
 
 func NewOptions(options ...func(*retryOptions)) *retryOptions {
 	o := &retryOptions{
-		MaxTries: -1,
-		Delay:    1,
+		Tries:    -1,
+		Delay:    1 * time.Second,
 		MaxDelay: 0,
 		BackOff:  1,
 	}
@@ -24,30 +26,30 @@ func NewOptions(options ...func(*retryOptions)) *retryOptions {
 
 func Tries(tries int) func(*retryOptions) {
 	return func(o *retryOptions) {
-		o.MaxTries = tries
+		o.Tries = tries
 	}
 }
 
-func Delay(delay float64) func(*retryOptions) {
+func Delay(delay time.Duration) func(*retryOptions) {
 	return func(o *retryOptions) {
 		o.Delay = delay
 	}
 }
 
-func MaxDelay(maxDelay float64) func(*retryOptions) {
+func MaxDelay(maxDelay time.Duration) func(*retryOptions) {
 	return func(o *retryOptions) {
 		o.MaxDelay = maxDelay
 	}
 }
 
-func BackOff(backOff float64) func(*retryOptions) {
+func BackOff(backOff time.Duration) func(*retryOptions) {
 	return func(o *retryOptions) {
 		o.BackOff = backOff
 	}
 }
 
 func canRetry(o *retryOptions, tries int) bool {
-	if tries == -1 || tries < o.MaxTries {
+	if tries == -1 || tries < o.Tries {
 		return true
 	}
 	return false

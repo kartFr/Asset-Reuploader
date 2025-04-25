@@ -1,18 +1,21 @@
 package retry
 
 import (
-	"math"
 	"time"
 )
 
-func getDelay(o *retryOptions, tries int) float64 {
-	delay := o.Delay * (o.BackOff * float64(tries))
+func getDelay(o *retryOptions, tries int) time.Duration {
+	backoff := o.BackOff * time.Duration(tries)
+	delay := o.Delay * backoff
 
 	if o.MaxDelay == 0 {
 		return delay
 	}
 
-	return math.Min(delay, o.MaxDelay)
+	if delay > o.MaxDelay {
+		return o.MaxDelay
+	}
+	return delay
 }
 
 func Do[T any](options *retryOptions, callback func() (T, error)) (T, error) {
@@ -34,7 +37,7 @@ func Do[T any](options *retryOptions, callback func() (T, error)) (T, error) {
 				return res, err.Err
 			}
 
-			<-time.After(time.Duration(getDelay(options, tries) * float64(time.Second)))
+			time.Sleep(getDelay(options, tries))
 		default:
 			return res, err
 		}
