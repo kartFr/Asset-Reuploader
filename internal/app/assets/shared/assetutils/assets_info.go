@@ -12,10 +12,7 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/taskqueue"
 )
 
-const (
-	assetsInfoRateLimit time.Duration = time.Minute / 1
-	AssetsInfoChunkSize int           = 50
-)
+const AssetsInfoChunkSize int = 50
 
 type AssetsInfoResult = taskqueue.TaskResult[develop.GetAssetsInfoResponse]
 

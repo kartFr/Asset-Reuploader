@@ -12,7 +12,7 @@ import (
 
 var (
 	ErrNotMember              = errors.New("account is not in group")
-	ErrNoCreateItemPermission = errors.New("account does not have permissios to create items for group")
+	ErrNoCreateItemPermission = errors.New("account does not have permission to create items for group")
 	ErrNoManageGroupGames     = errors.New("account does not have permission to manage group games")
 	ErrNoEditPermission       = errors.New("account does not have permission to edit place")
 )
