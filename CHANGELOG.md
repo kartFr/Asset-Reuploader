@@ -5,6 +5,7 @@
 ## Executable
 
 - Added fixed window limiter instead of naively sleeping ([#17](https://github.com/kartFr/Asset-Reuploader/issues/17))
+- Fixed `ErrNoCreateItemPermission` saying `permissios` instead of `permission`. ([#19](https://github.com/kartFr/Asset-Reuploader/pull/19))
 
 # [1.2.0](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.2.0) - April 18th, 2025
 
