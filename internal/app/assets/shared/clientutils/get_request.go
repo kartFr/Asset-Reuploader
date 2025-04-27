@@ -18,7 +18,7 @@ func GetRequest(c *roblox.Client, url string) (*bytes.Buffer, error) {
 
 	body, err := retry.Do(
 		retry.NewOptions(retry.Tries(3)),
-		func() (*bytes.Buffer, error) {
+		func(_ int) (*bytes.Buffer, error) {
 			resp, err := c.DoRequest(req)
 			if err != nil {
 				return nil, &retry.ContinueRetry{Err: err}

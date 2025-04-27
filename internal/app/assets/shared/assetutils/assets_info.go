@@ -1,6 +1,7 @@
 package assetutils
 
 import (
+	"net"
 	"time"
 
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/clientutils"
@@ -12,13 +13,15 @@ import (
 )
 
 const (
-	assetsInfoRateLimit time.Duration = time.Minute / 95
+	assetsInfoRateLimit time.Duration = time.Minute / 1
 	AssetsInfoChunkSize int           = 50
 )
 
 type AssetsInfoResult = taskqueue.TaskResult[develop.GetAssetsInfoResponse]
 
 func GetAssetsInfoInChunks(ctx *context.Context, r *request.Request) []chan AssetsInfoResult {
+	queue := taskqueue.New[develop.GetAssetsInfoResponse](time.Minute, 100)
+
 	newAssetsInfoHandler := func(ids []int64) func() (develop.GetAssetsInfoResponse, error) {
 		return func() (develop.GetAssetsInfoResponse, error) {
 			handler, err := develop.NewAssetsInfoHandler(ctx.Client, ids)
@@ -28,8 +31,11 @@ func GetAssetsInfoInChunks(ctx *context.Context, r *request.Request) []chan Asse
 
 			return retry.Do(
 				retry.NewOptions(retry.Tries(3)),
-				func() (develop.GetAssetsInfoResponse, error) {
+				func(try int) (develop.GetAssetsInfoResponse, error) {
 					ctx.PauseController.WaitIfPaused()
+					if try > 1 {
+						queue.Limiter.Wait()
+					}
 
 					assetsInfo, err := handler()
 					if err == nil {
@@ -40,6 +46,11 @@ func GetAssetsInfoInChunks(ctx *context.Context, r *request.Request) []chan Asse
 						clientutils.GetNewCookie(ctx, r, "cookie expired")
 					}
 
+					switch err.(type) {
+					case *net.OpError, *net.DNSError:
+						queue.Limiter.Decrement()
+					}
+
 					return develop.GetAssetsInfoResponse{}, &retry.ContinueRetry{Err: err}
 				},
 			)
@@ -47,7 +58,6 @@ func GetAssetsInfoInChunks(ctx *context.Context, r *request.Request) []chan Asse
 	}
 
 	ids := r.IDs
-	queue := taskqueue.New[develop.GetAssetsInfoResponse](assetsInfoRateLimit)
 
 	chunkAmount := (len(ids) + AssetsInfoChunkSize - 1) / AssetsInfoChunkSize
 	tasks := make([]chan AssetsInfoResult, 0, chunkAmount)

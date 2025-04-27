@@ -18,13 +18,13 @@ func getDelay(o *retryOptions, tries int) time.Duration {
 	return delay
 }
 
-func Do[T any](options *retryOptions, callback func() (T, error)) (T, error) {
+func Do[T any](options *retryOptions, callback func(try int) (T, error)) (T, error) {
 	var tries int
 
 	for {
 		tries++
 
-		res, err := callback()
+		res, err := callback(tries)
 		if err == nil {
 			return res, nil
 		}

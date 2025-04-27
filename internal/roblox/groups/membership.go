@@ -113,7 +113,7 @@ func Membership(c *roblox.Client, groupID int64) (*MembershipReponse, error) {
 
 	return retry.Do(
 		retry.NewOptions(retry.Tries(3)),
-		func() (*MembershipReponse, error) {
+		func(_ int) (*MembershipReponse, error) {
 			groupMembership, err := handler()
 			if err != nil {
 				if err == MembershipErrors.ErrGroupDoesNotExist {

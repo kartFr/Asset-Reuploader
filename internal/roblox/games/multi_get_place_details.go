@@ -89,7 +89,7 @@ func MultiGetPlaceDetails(c *roblox.Client, placeIDs []int64) ([]*PlaceDetailsRe
 
 	return retry.Do(
 		retry.NewOptions(retry.Tries(3)),
-		func() ([]*PlaceDetailsResponse, error) {
+		func(_ int) ([]*PlaceDetailsResponse, error) {
 			placeDetails, err := handler()
 			if err != nil {
 				if err == MultiGetPlaceDetailsErrors.ErrUnauthorized {

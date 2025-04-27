@@ -17,40 +17,43 @@ type task[R any] struct {
 }
 
 type Queue[R any] struct {
-	isSchedulerRunning bool
-	tasks              *list.List
+	Limiter *fixedWindow
+
 	interval           time.Duration
+	isSchedulerRunning bool
 	mutex              sync.Mutex
+	tasks              *list.List
 }
 
-func New[R any](interval time.Duration) *Queue[R] {
+func New[R any](window time.Duration, limit int) *Queue[R] {
 	return &Queue[R]{
+		Limiter: newFixedWindow(window, limit),
+
+		interval: window / time.Duration(limit),
 		tasks:    list.New(),
-		interval: interval,
 	}
 }
 
 func (q *Queue[R]) QueueTask(f func() (R, error)) chan TaskResult[R] {
-	taskChan := make(chan TaskResult[R])
+	c := make(chan TaskResult[R])
 
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 
 	q.tasks.PushBack(task[R]{
 		Func: f,
-		Chan: taskChan,
+		Chan: c,
 	})
 
 	if !q.isSchedulerRunning {
-		go q.startScheduler()
+		q.isSchedulerRunning = true
+		go q.scheduler()
 	}
 
-	return taskChan
+	return c
 }
 
-func (q *Queue[R]) startScheduler() {
-	q.isSchedulerRunning = true
-
+func (q *Queue[R]) scheduler() {
 	for {
 		q.mutex.Lock()
 		if q.tasks.Len() == 0 {
@@ -59,15 +62,16 @@ func (q *Queue[R]) startScheduler() {
 			return
 		}
 
-		element := q.tasks.Front()
-		task := element.Value.(task[R])
+		e := q.tasks.Front()
+		t := e.Value.(task[R])
 
-		q.tasks.Remove(element)
+		q.tasks.Remove(e)
 		q.mutex.Unlock()
 
+		q.Limiter.Wait()
 		go func() {
-			res, err := task.Func()
-			task.Chan <- TaskResult[R]{
+			res, err := t.Func()
+			t.Chan <- TaskResult[R]{
 				Result: res,
 				Error:  err,
 			}

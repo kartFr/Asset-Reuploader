@@ -65,6 +65,7 @@ func newAssetsInfoRequest(assetIDs []int64) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("User-Agent", "RobloxStudio/WinInet")
 
 	return req, nil
 }
@@ -97,7 +98,9 @@ func NewAssetsInfoHandler(c *roblox.Client, assetIDs []int64) (func() (GetAssets
 			return bulkResponse, GetAssetsInfoErrors.ErrUnauthorized
 		default:
 			if bulkResponse.Errors != nil {
-				return bulkResponse, errors.New(bulkResponse.Errors[0].Message)
+				if message := bulkResponse.Errors[0].Message; message != "" {
+					return bulkResponse, errors.New(bulkResponse.Errors[0].Message)
+				}
 			}
 
 			return bulkResponse, errors.New(resp.Status)

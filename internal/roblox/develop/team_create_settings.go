@@ -78,7 +78,7 @@ func TeamCreateSettings(c *roblox.Client, universeID int64) (TeamCreateSettingsR
 
 	return retry.Do(
 		retry.NewOptions(retry.Tries(3)),
-		func() (TeamCreateSettingsResponse, error) {
+		func(_ int) (TeamCreateSettingsResponse, error) {
 			settings, err := handler()
 			if err != nil {
 				if err == TeamCreateSettingsErrors.ErrInvalidUniverse ||

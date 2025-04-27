@@ -20,8 +20,6 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/taskqueue"
 )
 
-const uploadRateLimit time.Duration = time.Minute / 3000
-
 const assetTypeID int32 = 24
 
 var ErrUnauthorized = errors.New("authentication required to access asset")
@@ -41,7 +39,7 @@ func Reupload(ctx *context.Context, r *request.Request) {
 	}
 
 	filter := assetutils.NewFilter(ctx, r, assetTypeID)
-	uploadQueue := taskqueue.New[int64](uploadRateLimit)
+	uploadQueue := taskqueue.New[int64](time.Minute, 3000)
 
 	logger.Println("Reuploading animations...")
 
@@ -76,8 +74,11 @@ func Reupload(ctx *context.Context, r *request.Request) {
 		res := <-uploadQueue.QueueTask(func() (int64, error) {
 			return retry.Do(
 				retry.NewOptions(retry.Tries(3)),
-				func() (int64, error) {
+				func(try int) (int64, error) {
 					pauseController.WaitIfPaused()
+					if try > 1 {
+						uploadQueue.Limiter.Wait()
+					}
 
 					id, err := uploadHandler()
 					if err == nil {
@@ -140,7 +141,7 @@ func Reupload(ctx *context.Context, r *request.Request) {
 
 		assetLocations, err := retry.Do(
 			retry.NewOptions(retry.Tries(3)),
-			func() ([]*assetdelivery.AssetLocation, error) {
+			func(_ int) ([]*assetdelivery.AssetLocation, error) {
 				pauseController.WaitIfPaused()
 
 				locations, err := handler()

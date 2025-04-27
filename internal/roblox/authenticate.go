@@ -59,7 +59,7 @@ func authenticate(c *Client, cookie string) (UserInfo, error) {
 
 	userInfo, err := retry.Do(
 		retry.NewOptions(retry.Tries(3)),
-		func() (UserInfo, error) {
+		func(_ int) (UserInfo, error) {
 			userInfo, err := handler()
 			if err != nil {
 				if err == AuthenticateErrors.ErrAuthorizationDenied {
