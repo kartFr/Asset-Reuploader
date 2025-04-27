@@ -2,6 +2,10 @@
 
 - Added a changelog. Adds changelog to releases ([#7](https://github.com/kartFr/Asset-Reuploader/issues/7))
 
+## Executable
+
+- Added fixed window limiter instead of naively sleeping ([#17](https://github.com/kartFr/Asset-Reuploader/issues/17))
+
 # [1.2.0](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.2.0) - April 18th, 2025
 
 ## Executable
