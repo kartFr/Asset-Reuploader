@@ -83,8 +83,11 @@ func NewUpdatePermissionsHandler(c *roblox.Client, assetId int64, body Permissio
 			return nil, UpdatePermissionErrors.ErrTokenInvalid
 		default:
 			if response.Errors != nil {
-				return nil, errors.New(response.Errors[0].Message)
+				if message := response.Errors[0].Message; message != "" {
+					return nil, errors.New(response.Errors[0].Message)
+				}
 			}
+
 			return nil, errors.New(resp.Status)
 		}
 	}, nil
