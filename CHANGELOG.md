@@ -1,11 +1,13 @@
 # Unreleased
 
 - Added a changelog. Adds changelog to releases ([#7](https://github.com/kartFr/Asset-Reuploader/issues/7))
+- Updated rojo from `4.7.7` to `5.1.0`
 
 ## Executable
 
 - Added fixed window limiter instead of naively sleeping ([#17](https://github.com/kartFr/Asset-Reuploader/issues/17))
 - Fixed `ErrNoCreateItemPermission` saying `permissios` instead of `permission`. ([#19](https://github.com/kartFr/Asset-Reuploader/pull/19))
+- Fixed blank error messages ([#21](https://github.com/kartFr/Asset-Reuploader/pull/21))
 
 # [1.2.0](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.2.0) - April 18th, 2025
 
