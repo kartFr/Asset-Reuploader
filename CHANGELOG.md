@@ -1,10 +1,10 @@
 # [1.3.0](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.0) - April 27th, 2025
 
-- Added a changelog. Adds changelog to releases ([#7](https://github.com/kartFr/Asset-Reuploader/issues/7))
+- Added a changelog. Adds changelog to releases ([#16](https://github.com/kartFr/Asset-Reuploader/pull/16))
 
 ## Executable
 
-- Added fixed window limiter instead of naively sleeping. (big change very good for reuploading 😇) ([#17](https://github.com/kartFr/Asset-Reuploader/issues/17))
+- Added fixed window limiter instead of naively sleeping. (big change very good for reuploading 😇) ([#18](https://github.com/kartFr/Asset-Reuploader/pull/18))
 - Fixed `ErrNoCreateItemPermission` saying `permissios` instead of `permission`. ([#19](https://github.com/kartFr/Asset-Reuploader/pull/19))
 - Fixed blank error messages ([#21](https://github.com/kartFr/Asset-Reuploader/pull/21))
 
