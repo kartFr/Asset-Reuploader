@@ -1,3 +1,7 @@
+# Unreleased
+
+- Changed client timeout from `15s` to `30s`
+
 # [1.3.0](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.0) - April 27th, 2025
 
 - Added a changelog. Adds changelog to releases ([#16](https://github.com/kartFr/Asset-Reuploader/pull/16))

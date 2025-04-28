@@ -27,7 +27,7 @@ type Client struct {
 func NewClient(cookie string) (*Client, error) {
 	c := &Client{
 		httpClient: &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout: 30 * time.Second,
 		},
 	}
 
