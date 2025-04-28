@@ -12,7 +12,7 @@ type RawRequest struct {
 	DefaultPlaceIDs []int64 `json:"defaultPlaceIds"`
 	PluginVersion   string  `json:"pluginVersion"`
 	AssetType       string  `json:"assetType"`
-	ExportJson      bool    `json:"exportJSON"`
+	ExportJSON      bool    `json:"exportJSON"`
 	IsGroup         bool    `json:"isGroup"`
 }
 

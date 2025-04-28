@@ -107,7 +107,7 @@ func serve(c *roblox.Client) error {
 			return
 		}
 
-		if exportJSON = req.ExportJson; exportJSON {
+		if exportJSON = req.ExportJSON; exportJSON {
 			exportedJSONName = getOutputFileName(req.AssetType)
 		}
 

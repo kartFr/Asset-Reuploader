@@ -3,6 +3,7 @@ package animation
 import (
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -89,6 +90,11 @@ func Reupload(ctx *context.Context, r *request.Request) {
 						clientutils.GetNewCookie(ctx, r, "cookie expired")
 					} else if err == ide.UploadAnimationErrors.ErrInappropriateName {
 						assetInfo.Name = fmt.Sprintf("(%s) [Censored]", assetInfo.Name)
+					} else {
+						switch err.(type) {
+						case *net.OpError, *net.DNSError:
+							uploadQueue.Limiter.Decrement()
+						}
 					}
 
 					return 0, &retry.ContinueRetry{Err: err}

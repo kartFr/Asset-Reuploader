@@ -35,13 +35,13 @@ type PermissionResponse struct {
 	} `json:"errors,omitempty"`
 }
 
-func newUpdatePermissionsRequest(assetId int64, body PermissionRequest) (*http.Request, error) {
+func newUpdatePermissionsRequest(assetID int64, body PermissionRequest) (*http.Request, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("https://apis.roblox.com/asset-permissions-api/v1/assets/%d/permissions", assetId)
+	url := fmt.Sprintf("https://apis.roblox.com/asset-permissions-api/v1/assets/%d/permissions", assetID)
 	req, err := http.NewRequest("PATCH", url, bytes.NewReader(jsonBody))
 	if err != nil {
 		return req, err
@@ -51,8 +51,8 @@ func newUpdatePermissionsRequest(assetId int64, body PermissionRequest) (*http.R
 	return req, nil
 }
 
-func NewUpdatePermissionsHandler(c *roblox.Client, assetId int64, body PermissionRequest) (func() (*PermissionResponse, error), error) {
-	req, err := newUpdatePermissionsRequest(assetId, body)
+func NewUpdatePermissionsHandler(c *roblox.Client, assetID int64, body PermissionRequest) (func() (*PermissionResponse, error), error) {
+	req, err := newUpdatePermissionsRequest(assetID, body)
 	if err != nil {
 		return func() (*PermissionResponse, error) { return nil, nil }, err
 	}

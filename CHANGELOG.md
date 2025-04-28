@@ -1,13 +1,17 @@
-# Unreleased
+# [1.3.0](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.0) - April 27th, 2025
 
 - Added a changelog. Adds changelog to releases ([#7](https://github.com/kartFr/Asset-Reuploader/issues/7))
-- Updated rojo from `4.7.7` to `5.1.0`
 
 ## Executable
 
-- Added fixed window limiter instead of naively sleeping ([#17](https://github.com/kartFr/Asset-Reuploader/issues/17))
+- Added fixed window limiter instead of naively sleeping. (big change very good for reuploading 😇) ([#17](https://github.com/kartFr/Asset-Reuploader/issues/17))
 - Fixed `ErrNoCreateItemPermission` saying `permissios` instead of `permission`. ([#19](https://github.com/kartFr/Asset-Reuploader/pull/19))
 - Fixed blank error messages ([#21](https://github.com/kartFr/Asset-Reuploader/pull/21))
+
+## Plugin 1.2.1
+
+- Changed audio tip to be more clear ([#10](https://github.com/kartFr/Asset-Reuploader/pull/10))
+- Fixed tip bar theme not updating
 
 # [1.2.0](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.2.0) - April 18th, 2025
 
@@ -17,7 +21,7 @@
 - Added ratelimit to reuploading animations. ([#5](https://github.com/kartFr/Asset-Reuploader/pull/5))
 - Added micro optimizations that nobody will ever notice.
 
-## Plugin
+## Plugin 1.2.0
 
 - Added notification border
 - Some other stuff nobody will ever care about (me fr)
@@ -39,7 +43,7 @@
 - Changed group error messages to be clearer.
 - Fixed issue where reuploading wasn't happening in goroutines.
 
-## Plugin
+## Plugin 1.1.0
 
 - Changed IDs to replace on new threads.
 - Changed Input element to it's own class.

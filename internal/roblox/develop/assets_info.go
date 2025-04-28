@@ -65,7 +65,6 @@ func newAssetsInfoRequest(assetIDs []int64) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "RobloxStudio/WinInet")
 
 	return req, nil
 }

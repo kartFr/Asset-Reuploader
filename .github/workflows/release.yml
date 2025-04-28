@@ -98,9 +98,9 @@ jobs:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
             run: |
               if [ "${{ matrix.os }}" = "windows-latest" ]; then
-                7z a -sdel AssetReuploader-${{ github.event.inputs.version }}-${{ matrix.name }}.zip changelog.md config.ini LICENSE ./AssetReuploader*
+                7z a -sdel AssetReuploader-${{ github.event.inputs.version }}-${{ matrix.name }}.zip CHANGELOG.md config.ini LICENSE ./AssetReuploader*
               else
-                zip -jr AssetReuploader-${{ github.event.inputs.version }}-${{ matrix.name }}.zip changelog.md config.ini LICENSE ./AssetReuploader*
+                zip -jr AssetReuploader-${{ github.event.inputs.version }}-${{ matrix.name }}.zip CHANGELOG.md config.ini LICENSE ./AssetReuploader*
               fi
             
               gh release upload ${{ github.event.inputs.version }} AssetReuploader-${{ github.event.inputs.version }}-${{ matrix.name }}.zip
