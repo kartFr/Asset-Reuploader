@@ -1,22 +1,42 @@
 package files
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
-func Write(f, s string) error {
-	file, err := os.OpenFile(f, os.O_CREATE|os.O_WRONLY, 0o660)
+func getDir() (string, error) {
+	path, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+
+	dir := filepath.Dir(path)
+	return dir, nil
+}
+
+func Write(n, c string) error {
+	dir, err := getDir()
 	if err != nil {
 		return err
 	}
 
-	file.WriteString(s)
-	file.Close()
-	return nil
+	f, err := os.OpenFile(filepath.Join(dir, n), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o660)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(c)
+	return err
 }
 
-func Read(f string) (string, error) {
-	data, err := os.ReadFile(f)
+func Read(n string) (string, error) {
+	dir, err := getDir()
 	if err != nil {
 		return "", err
 	}
-	return string(data), nil
+
+	data, err := os.ReadFile(filepath.Join(dir, n))
+	return string(data), err
 }
