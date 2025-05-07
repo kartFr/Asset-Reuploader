@@ -1,6 +1,6 @@
 # Unreleased
 
-- Fixed saving cookie for mac users. ([#26](https://github.com/kartFr/Asset-Reuploader/pull/26))
+- Fixed saving cookie for mac users. ([#27](https://github.com/kartFr/Asset-Reuploader/pull/27))
 
 # [1.3.1](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.1) - April 27th, 2025
 
