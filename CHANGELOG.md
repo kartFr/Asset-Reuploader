@@ -1,6 +1,6 @@
 # Unreleased
 
-- Changed it so writing/reading to files now gets the full executable directory. ([#26](https://github.com/kartFr/Asset-Reuploader/pull/26))
+- Fixed saving cookie for mac users. ([#26](https://github.com/kartFr/Asset-Reuploader/pull/26))
 
 # [1.3.1](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.1) - April 27th, 2025
 
