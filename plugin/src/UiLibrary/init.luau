@@ -88,6 +88,7 @@ local function UpdateTheme(self: Ui)
 	Theme.updateText(notificationMainFrame.Close, true)
 	Theme.updateText(notificationMainFrame.Description, true)
 	Theme.updateText(notificationMainFrame.Title, true)
+	notificationMainFrame.Title.TextSize += 10
 	notificationMainFrame.Image = theme.NotificationImage
 	notificationMainFrame.BackgroundColor3 = theme.ForegroundColor
 	notificationMainFrame.Transparency = theme.NotificationTransparency

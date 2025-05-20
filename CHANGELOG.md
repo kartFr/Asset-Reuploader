@@ -5,6 +5,7 @@
   - Added port to startup message.
   - Added message to tell user you can rerun without restarting when finished reuploading.
   - Fixed stats displaying on failure to start reuploading.
+  - Fixed notification header being tiny.
 
 # [1.3.1](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.1) - April 27th, 2025
 
