@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets"
-	"github.com/kartFr/Asset-Reuploader/internal/app/config"
 	"github.com/kartFr/Asset-Reuploader/internal/app/request"
 	"github.com/kartFr/Asset-Reuploader/internal/app/response"
 	"github.com/kartFr/Asset-Reuploader/internal/color"
@@ -17,8 +16,6 @@ import (
 )
 
 var CompatiblePluginVersion = ""
-
-var port = config.Get("port")
 
 func getOutputFileName(reuploadType string) string {
 	t := time.Now()
@@ -59,7 +56,7 @@ func serve(c *roblox.Client) error {
 				respHistory = make([]response.ResponseItem, 0)
 
 				fmt.Fprint(w, "done")
-				fmt.Println("Finished reuploading")
+				fmt.Println("Finished reuploading. (you can rerun without restarting)")
 			}
 
 			return
@@ -116,13 +113,17 @@ func serve(c *roblox.Client) error {
 
 		go func() {
 			start := time.Now()
-			startReupload()
+			err := startReupload()
+			busy = false
+			if err != nil {
+				finished = true
+				color.Error.Println("Failed to start reuploading: ", err)
+				return
+			}
 
 			duration := time.Since(start)
 			fmt.Printf("Reuploading took %d hours, %d minutes, and %d seconds\n", int(duration.Hours()), int(duration.Minutes())%60, int(duration.Seconds())%60)
 			fmt.Println("Waiting for client to finish changing ids...")
-
-			busy = false
 		}()
 
 		w.WriteHeader(http.StatusOK)

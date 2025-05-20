@@ -13,7 +13,10 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/roblox"
 )
 
-var cookieFile = config.Get("cookie_file")
+var (
+	cookieFile = config.Get("cookie_file")
+	port       = config.Get("port")
+)
 
 func main() {
 	console.ClearScreen()
@@ -42,7 +45,7 @@ func main() {
 		color.Error.Println("Failed to save cookie: ", err)
 	}
 
-	fmt.Println("localhost started. Waiting to start reuploading.")
+	fmt.Println("localhost started on port " + port + ". Waiting to start reuploading.")
 	if err := serve(c); err != nil {
 		log.Fatal(err)
 	}

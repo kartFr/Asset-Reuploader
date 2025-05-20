@@ -1,6 +1,10 @@
 # Unreleased
 
 - Fixed saving cookie for mac users. ([#27](https://github.com/kartFr/Asset-Reuploader/pull/27))
+- Added accessibility changes:
+  - Added port to startup message.
+  - Added message to tell user you can rerun without restarting when finished reuploading.
+  - Fixed stats displaying on failure to start reuploading.
 
 # [1.3.1](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.1) - April 27th, 2025
 

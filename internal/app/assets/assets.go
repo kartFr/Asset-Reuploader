@@ -10,7 +10,6 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/app/context"
 	"github.com/kartFr/Asset-Reuploader/internal/app/request"
 	"github.com/kartFr/Asset-Reuploader/internal/app/response"
-	"github.com/kartFr/Asset-Reuploader/internal/color"
 	"github.com/kartFr/Asset-Reuploader/internal/console"
 	"github.com/kartFr/Asset-Reuploader/internal/roblox"
 )
@@ -19,13 +18,13 @@ var assetModules = map[string]func(ctx *context.Context, r *request.Request){
 	"Animation": animation.Reupload,
 }
 
-func NewReuploadHandlerWithType(assetType string, c *roblox.Client, r *request.RawRequest, resp *response.Response) (func(), error) {
+func NewReuploadHandlerWithType(assetType string, c *roblox.Client, r *request.RawRequest, resp *response.Response) (func() error, error) {
 	reupload, exists := assetModules[assetType]
 	if !exists {
-		return func() {}, errors.New(assetType + " module does not exist")
+		return func() error { return nil }, errors.New(assetType + " module does not exist")
 	}
 
-	return func() {
+	return func() error {
 		ctx := context.New(c, resp)
 
 		console.ClearScreen()
@@ -34,8 +33,7 @@ func NewReuploadHandlerWithType(assetType string, c *roblox.Client, r *request.R
 		req, err := request.FromRawRequest(c, r)
 		console.ClearScreen()
 		if err != nil {
-			color.Error.Println(err)
-			return
+			return err
 		}
 
 		fmt.Println("Checking if account can edit universe...")
@@ -46,6 +44,7 @@ func NewReuploadHandlerWithType(assetType string, c *roblox.Client, r *request.R
 		}
 
 		reupload(ctx, req)
+		return nil
 	}, nil
 }
 
