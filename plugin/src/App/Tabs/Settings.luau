@@ -28,8 +28,8 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
         local newPort = tonumber(input)
         if not newPort then return end
 
-        if newPort <= 2048 or newPort > 65535 then
-            ui:Notify("Notification", "Port has to be between 2049-65535.")
+        if newPort < 1024 or newPort > 49151 then
+            ui:Notify("Notification", "Port has to be between 1024-49151.")
             return
         end
 

@@ -23,7 +23,7 @@ widget:GetPropertyChangedSignal("Enabled"):Connect(function() toggleButton:SetAc
 widget.Title = `Asset Reuploader {currentVersion}`
 
 if plugin:GetSetting("Port") == nil then
-	plugin:SetSetting("Port", 51048)
+	plugin:SetSetting("Port", 38073)
 end
 
 local ui = UiLibrary.new(widget, plugin)
