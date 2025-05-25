@@ -21,11 +21,17 @@ end
 local function UpdateTheme(self: Input)
     local theme = Theme.get()
 
-    local button = self.instance
-    button.BackgroundColor3 = theme.UnselectedColor
-    button.BorderColor3 = theme.BorderColor
+    local instance = self.instance
+    instance.BackgroundColor3 = theme.UnselectedColor
+    instance.BorderColor3 = theme.BorderColor
 
-    Theme.updateText(button.TextBox, true)
+    local button = instance.ImageButton
+    Theme.updateFrame(button)
+    button.BackgroundColor3 = theme.UnselectedColor
+    button.Image = theme.InputImage
+    button.ImageColor3 = theme.InputColor
+
+    Theme.updateText(instance.TextBox, true)
 
     if self._tip then
         self._tip:UpdateTheme()
@@ -54,15 +60,28 @@ function Input.new(parent: GuiObject, placeholderText: string, callback: (input:
     local inputBox = instance.TextBox
     inputBox.PlaceholderText = placeholderText
 
-    inputBox.FocusLost:Connect(function(enterPressed)
-        if not enterPressed then return end
-
+    local function inputEntered()
         local text = inputBox.Text
         if text == "" then return end
         
         inputBox.Text = ""
         callback(text)
+    end
+
+    inputBox.FocusLost:Connect(function(enterPressed)
+        if not enterPressed then return end
+        inputEntered()
     end)
+
+    local button = instance.ImageButton
+    button.MouseButton1Down:Connect(function()
+		button.BackgroundColor3 = Theme.get().SelectedColor
+		inputEntered()
+	end)
+
+    local function colorUnselected() button.BackgroundColor3 = Theme.get().UnselectedColor end
+    button.MouseButton1Up:Connect(colorUnselected)
+    button.MouseLeave:Connect(colorUnselected)
 
     local self = {
         instance = instance,

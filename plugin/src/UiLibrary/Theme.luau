@@ -25,6 +25,8 @@ local DEFAULT_THEME_PARAMETERS: RawTheme = {
     ToggleBackgroundColor = { Enum.StudioStyleGuideColor.DialogMainButton.Name },
 	ToggleImage = "rbxassetid://97413807029185",
 
+	InputColor = { Enum.StudioStyleGuideColor.MainText.Name },
+	InputImage = "rbxassetid://72207659330742",
     TipColor = { Enum.StudioStyleGuideColor.MainText.Name },
     TipImage = "rbxassetid://110240163333510",
 
@@ -70,6 +72,8 @@ export type Theme = {
 	ToggleBackgroundColor: Color3,
 	ToggleImage: string,
 
+	InputColor: Color3,
+	InputImage: string,
 	TipColor: Color3,
 	TipImage: string,
 
