@@ -2,6 +2,7 @@
 
 - Fixed saving cookie for mac users. ([#27](https://github.com/kartFr/Asset-Reuploader/pull/27))
 - Fixed reupload filter not taking into account whether it was reuploading to a group or user. ([#51](https://github.com/kartFr/Asset-Reuploader/pull/51))
+- Fixed rate limit window going into the negatives when resetting. ([#53](https://github.com/kartFr/Asset-Reuploader/pull/53))
 
 ### Accessibility changes ([#46](https://github.com/kartFr/Asset-Reuploader/pull/46))
 

@@ -31,7 +31,8 @@ func (w *fixedWindow) Increment() bool {
 	defer w.mu.Unlock()
 
 	if w.timeRemaining(time.Now()) < 0 {
-		w.requests = min(w.requests-w.limit, 0)
+		w.start = time.Now()
+		w.requests = max(w.requests-w.limit, 0)
 	}
 
 	if w.requests >= w.limit {
