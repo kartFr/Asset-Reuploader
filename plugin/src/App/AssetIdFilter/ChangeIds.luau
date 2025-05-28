@@ -67,6 +67,7 @@ end
 
 local function transferChildren(oldInstance: Instance, newInstance: Instance)
     for _, child in oldInstance:GetChildren() do
+        if child:IsA("TouchTransmitter") then continue end
         child.Parent = newInstance
     end
 end
@@ -83,8 +84,19 @@ local function transferProperties(oldInstance: Instance, newInstance: Instance)
     end
 
     for _, property in cachedProperties do
-        if property == "Parent" then continue end
+        if property == "Parent" or property == "Sandboxed" then continue end -- TODO: remove sandboxed when the update comes.
         (newInstance :: any)[property] = (oldInstance :: any)[property]
+    end
+end
+
+local function transferJoints(oldInstance: Instance, newInstance: Instance)
+    for _, instance in game:GetDescendants() do -- VERY BAD IMPLEMENTATION, just trying to push it out, will implement a more performant method in 2.0.0 update, it requires BIG revamps for what I have in mind...
+        if not instance:IsA("JointInstance") then continue end
+        if instance.Part0 == oldInstance then
+			instance.Part0 = newInstance
+		else
+			instance.Part1 = newInstance
+		end
     end
 end
 
@@ -101,15 +113,17 @@ local function setMeshPart(meshPart: MeshPart, oldId: number, newId: number)
         FluidFidelity = meshPart.FluidFidelity
     } :: any)
 
-    local propertiesTransferred, result = pcall(transferProperties, meshPart, newMeshPart)
-    if not propertiesTransferred then
+    local success, result = pcall(function()
+        transferProperties(meshPart, newMeshPart)
+        transferAttributes(meshPart, newMeshPart)
+        transferTags(meshPart, newMeshPart)
+        transferChildren(meshPart, newMeshPart)
+        transferJoints(meshPart, newMeshPart)
+    end)
+    if not success then
         newMeshPart:Destroy()
         error(result)
     end
-
-    transferAttributes(meshPart, newMeshPart)
-    transferTags(meshPart, newMeshPart)
-    transferChildren(meshPart, newMeshPart)
 
     newMeshPart.Parent = meshPart.Parent
     meshPart:Destroy()

@@ -14,6 +14,13 @@
 - Fixed stats displaying on failure to start reuploading.
 - Fixed notification header being tiny.
 
+### Mesh fixes ([#55](https://github.com/kartFr/Asset-Reuploader/pull/53))
+
+- Changed error handling, should properly handle errors for transferring attributes, tags, and children.
+- Fixed sandbox not enabled error message.
+- Fixed reuploading meshes not changing joints. (this will be laggy for now, performance improvements will come in v2.0.0 as code needs a big revamp in some areas for this)
+- Fixed reuploading trying to reparent touch interests.
+
 # [1.3.1](https://github.com/kartFr/Asset-Reuploader/releases/tag/1.3.1) - April 27th, 2025
 
 - Changed client timeout from `15s` to `30s` ([#24](https://github.com/kartFr/Asset-Reuploader/pull/24))
