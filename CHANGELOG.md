@@ -14,7 +14,7 @@
 - Fixed stats displaying on failure to start reuploading.
 - Fixed notification header being tiny.
 
-### Mesh fixes ([#55](https://github.com/kartFr/Asset-Reuploader/pull/53))
+### Mesh fixes ([#55](https://github.com/kartFr/Asset-Reuploader/pull/55))
 
 - Changed error handling, should properly handle errors for transferring attributes, tags, and children.
 - Fixed sandbox not enabled error message.
