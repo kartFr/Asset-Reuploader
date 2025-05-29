@@ -3,39 +3,45 @@ package files
 import (
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-func getDir() string {
-	exePath, err := os.Executable()
-	if err == nil {
-		exeDir := filepath.Dir(exePath)
-		if !strings.HasPrefix(exeDir, os.TempDir()) {
-			return exeDir
-		}
-	}
-
-	wd, err := os.Getwd()
-	if err != nil {
-		return "."
-	}
-	return wd
-}
-
 func Write(n, c string) error {
-	dir := getDir()
-	f, err := os.OpenFile(filepath.Join(dir, n), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	dir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 
-	_, err = f.WriteString(c)
+	f, err := os.CreateTemp(dir, n+".tmp")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			f.Close()
+			os.Remove(f.Name())
+		}
+	}()
+
+	if _, err := f.WriteString(c); err != nil {
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+
+	err = rename(f.Name(), filepath.Join(dir, n))
 	return err
 }
 
 func Read(n string) (string, error) {
-	dir := getDir()
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
 	data, err := os.ReadFile(filepath.Join(dir, n))
 	return string(data), err
 }
