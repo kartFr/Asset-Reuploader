@@ -84,7 +84,7 @@ local function transferProperties(oldInstance: Instance, newInstance: Instance)
     end
 
     for _, property in cachedProperties do
-        if property == "Parent" or property == "Sandboxed" then continue end -- TODO: remove sandboxed when the update comes.
+        if property == "Parent" or property == "Sandboxed" or property == "BrickColor" then continue end -- TODO: remove sandboxed when the update comes.
         (newInstance :: any)[property] = (oldInstance :: any)[property]
     end
 end
