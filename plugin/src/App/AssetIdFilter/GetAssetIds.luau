@@ -67,9 +67,7 @@ local instanceIdGetters: { [string]: (instance: any) -> { [number]: { Instance }
     Animation = getAnimationId,
     Sound = getSoundId,
 
-    Script = getScriptIds,
-    LocalScript = getScriptIds,
-    ModuleScript = getScriptIds,
+    LuaSourceContainer = getScriptIds,
 
     NumberValue = getNumberValueId,
     IntValue = getNumberValueId,

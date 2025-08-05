@@ -16,11 +16,7 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
 	
 	tab:CreateButton("Reupload Selected", function()
 		local filter =  {
-			WhitelistedInstances = {
-				"Animation",
-				"StringValue", "NumberValue", "IntValue",
-				"Script", "LocalScript", "ModuleScript"
-			},
+			WhitelistedInstances = { "Animation", "StringValue", "NumberValue", "IntValue", "LuaSourceContainer" },
 			Instances = Selection:Get()
 		}
 

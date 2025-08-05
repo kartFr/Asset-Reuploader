@@ -3,7 +3,7 @@ local AssetIdFilter = require("./AssetIdFilter")
 
 local pluginSettings: { [string]: { string } } = {
     StrVals = { "StringValue" },
-    Scripts = { "Script", "LocalScript", "ModuleScript" },
+    Scripts = { "LuaSourceContainer" },
     NumVals = { "NumberValue", "IntValue" }
 }
 

@@ -13,10 +13,10 @@ export type IdPair = {
     oldId: number
 }
 
-local function setScriptIds(scriptInstance: Script | LocalScript | ModuleScript, idsToChange: { IdPair })
+local function setScriptIds(scriptInstance: LuaSourceContainer, idsToChange: { IdPair })
     local source = scriptInstance.Source
     if not source then
-        warn(scriptInstance, "has nil source.")
+        warn(scriptInstance, "has nil source")
         return
     end
 
@@ -158,7 +158,7 @@ return function(filteredIds: { [number]: { Instance } }, idsToChange: { IdPair }
         if not instanceArray then continue end
 
         for _, instance in instanceArray do
-            if instance:IsA("BaseScript") or instance:IsA("ModuleScript") then
+            if instance:IsA("LuaSourceContainer") then
                 if not scriptIdChanges[instance] then scriptIdChanges[instance] = {} end
                 table.insert(scriptIdChanges[instance], idPair)
                 continue

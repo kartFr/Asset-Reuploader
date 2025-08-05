@@ -53,7 +53,7 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
             WhitelistedInstances = {
                 "MeshPart", "SpecialMesh", "CharacterMesh", 
                 "StringValue", "NumberValue", "IntValue",
-                "Script", "LocalScript", "ModuleScript"
+                "LuaSourceContainer",
             },
             Instances = Selection:Get()
         }
