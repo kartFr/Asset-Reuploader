@@ -45,7 +45,7 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
             table.insert(filter.WhitelistedInstances, className)
         end
 
-		reuploadIds(plugin, ui, filter, "Mesh")
+		reuploadIds(plugin, ui, filter, "Mesh", _G.getPlaceList()) -- forgive me
 	end)
 	
 	tab:CreateButton("Reupload Selected", function()
@@ -58,6 +58,6 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
             Instances = Selection:Get()
         }
 
-        reuploadIds(plugin, ui, filter, "Mesh")
+        reuploadIds(plugin, ui, filter, "Mesh", _G.getPlaceList()) -- forgive me
 	end)
 end

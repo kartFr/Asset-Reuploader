@@ -67,8 +67,6 @@ local instanceIdGetters: { [string]: (instance: any) -> { [number]: { Instance }
     Animation = getAnimationId,
     Sound = getSoundId,
 
-    LuaSourceContainer = getScriptIds,
-
     NumberValue = getNumberValueId,
     IntValue = getNumberValueId,
     StringValue = getStringValueIds,
@@ -78,11 +76,17 @@ local instanceIdGetters: { [string]: (instance: any) -> { [number]: { Instance }
     SpecialMesh = getSpecialMesh,
 }
 
-local function createFilterMap(instanceFilter: { string }): {[string]: boolean}
-    local filterMap = {}
+local function createFilterMap(instanceFilter: { string }): {[string]: (instance: Instance) -> { [number]: { Instance } }}
+    local filterMap = {} :: any -- yes my code getting lazy i apologize... v2.0.0 will do good code
     for _, className in instanceFilter do
-        assert(instanceIdGetters[className], `{className} is not a supported instance`)
-        filterMap[className] = true
+        if className == "LuaSourceContainer" then
+            filterMap["LocalScript"] = getScriptIds
+            filterMap["ModuleScript"] = getScriptIds
+            filterMap["Script"] = getScriptIds
+        else
+            assert(instanceIdGetters[className], `{className} is not a supported instance`)
+            filterMap[className] = instanceIdGetters[className]
+        end
     end
     return filterMap
 end
@@ -107,9 +111,10 @@ return function(filterOptions: FilterOptions): { [number]: { Instance } }
     local filterMap = createFilterMap(filterOptions.WhitelistedInstances)
     for _, instance in filterOptions.Instances do
         local className = instance.ClassName
-        if not filterMap[className] then continue end
+        local parseId = filterMap[className]
+        if not parseId then continue end
 
-        merge(idMap, instanceIdGetters[className](instance))
+        merge(idMap, parseId(instance))
     end
     return idMap
 end

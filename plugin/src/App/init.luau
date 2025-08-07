@@ -11,6 +11,7 @@ local tabOrder = {
     "Sound",
     "Mesh",
     "Replace",
+    "Filter",
     "Settings"
 }
 

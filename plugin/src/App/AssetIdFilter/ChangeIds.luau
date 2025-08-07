@@ -94,7 +94,7 @@ local function transferJoints(oldInstance: Instance, newInstance: Instance)
         if not instance:IsA("JointInstance") then continue end
         if instance.Part0 == oldInstance then
 			instance.Part0 = newInstance
-		else
+		elseif instance.Part1 == oldInstance then
 			instance.Part1 = newInstance
 		end
     end

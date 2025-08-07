@@ -11,7 +11,7 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
 	tab:CreateButton("Reupload", function()
 		local filter = getFilterOptions(plugin, game:GetDescendants())
 		table.insert(filter.WhitelistedInstances, "Animation")
-		reuploadIds(plugin, ui, filter, "Animation")
+		reuploadIds(plugin, ui, filter, "Animation", _G.getPlaceList()) -- forgive me
 	end)
 	
 	tab:CreateButton("Reupload Selected", function()
@@ -20,6 +20,6 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
 			Instances = Selection:Get()
 		}
 
-		reuploadIds(plugin, ui, filter, "Animation")
+		reuploadIds(plugin, ui, filter, "Animation", _G.getPlaceList()) -- forgive me
 	end)
 end

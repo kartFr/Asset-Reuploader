@@ -7,24 +7,8 @@ local HttpService = game:GetService("HttpService")
 return function(ui: UiLibrary.Ui, plugin: Plugin)
     local tab = ui:CreateTab("Settings")
 
-    local split1 = tab:CreateSplit()
-    split1:CreateToggle("Search string values", function(state)
-        plugin:SetSetting("StrVals", state)
-    end, plugin:GetSetting("StrVals"))
-    split1:CreateToggle("Search scripts", function(state)
-        plugin:SetSetting("Scripts", state)
-    end, plugin:GetSetting("Scripts"))
-    
-    local split2 = tab:CreateSplit()
-    split2:CreateToggle("Search int/number values", function(state)
-        plugin:SetSetting("NumVals", state)
-    end, plugin:GetSetting("NumVals"))
-    split2:CreateToggle("Export json when done", function(state)
-        plugin:SetSetting("ExportJSON", state)
-    end, plugin:GetSetting("ExportJSON"))
-
-    local split3 = tab:CreateSplit()
-    local portInput; portInput = split3:CreateInput("Port: " .. plugin:GetSetting("Port"), function(input)
+    local split = tab:CreateSplit()
+    local portInput; portInput = split:CreateInput("Port: " .. plugin:GetSetting("Port"), function(input)
         local newPort = tonumber(input)
         if not newPort then return end
 
@@ -36,6 +20,9 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
         plugin:SetSetting("Port", newPort)
         portInput.instance.TextBox.PlaceholderText = "Port: " .. newPort
     end)
+    split:CreateToggle("Export json when done", function(state)
+        plugin:SetSetting("ExportJSON", state)
+    end, plugin:GetSetting("ExportJSON"))
 
     local themeList
 
@@ -78,7 +65,7 @@ return function(ui: UiLibrary.Ui, plugin: Plugin)
         element.instance.TextLabel.Text = themeName
     end
 
-    split3:CreateButton("Import theme", function()
+    tab:CreateButton("Import theme", function()
         local file: File = StudioService:PromptImportFile({"json"} :: any) :: File
         if not file then return end
 
