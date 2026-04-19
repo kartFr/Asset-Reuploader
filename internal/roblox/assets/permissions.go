@@ -1,4 +1,4 @@
-package assets
+package permissions
 
 import (
 	"bytes"
@@ -13,9 +13,11 @@ import (
 var UpdatePermissionErrors = struct {
 	ErrTokenInvalid     error
 	ErrNotAuthenticated error
+	ErrUnsupportedAsset error
 }{
 	ErrTokenInvalid:     errors.New("XSRF token validation failed"),
 	ErrNotAuthenticated: errors.New("user is not authenticated"),
+	ErrUnsupportedAsset: errors.New("asset cannot be modified via permissions endpoint"),
 }
 
 type PermissionRequestItem struct {
@@ -44,10 +46,10 @@ func newUpdatePermissionsRequest(assetID int64, body PermissionRequest) (*http.R
 	url := fmt.Sprintf("https://apis.roblox.com/asset-permissions-api/v1/assets/%d/permissions", assetID)
 	req, err := http.NewRequest("PATCH", url, bytes.NewReader(jsonBody))
 	if err != nil {
-		return req, err
+		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
 
+	req.Header.Set("Content-Type", "application/json")
 	return req, nil
 }
 
@@ -58,37 +60,55 @@ func NewUpdatePermissionsHandler(c *roblox.Client, assetID int64, body Permissio
 	}
 
 	return func() (*PermissionResponse, error) {
-		req.AddCookie(&http.Cookie{
-			Name:  ".ROBLOSECURITY",
-			Value: c.Cookie,
-		})
-		req.Header.Set("x-csrf-token", c.GetToken())
+		for attempt := 0; attempt < 2; attempt++ {
+			req2 := req.Clone(req.Context())
 
-		resp, err := c.DoRequest(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
+			req2.AddCookie(&http.Cookie{
+				Name:  ".ROBLOSECURITY",
+				Value: c.Cookie,
+			})
 
-		var response PermissionResponse
-		json.NewDecoder(resp.Body).Decode(&response)
+			if token := c.GetToken(); token != "" {
+				req2.Header.Set("x-csrf-token", token)
+			}
 
-		switch resp.StatusCode {
-		case http.StatusOK:
-			return &response, nil
-		case http.StatusUnauthorized:
-			return nil, UpdatePermissionErrors.ErrNotAuthenticated
-		case http.StatusForbidden:
-			c.SetToken(resp.Header.Get("x-csrf-token"))
-			return nil, UpdatePermissionErrors.ErrTokenInvalid
-		default:
-			if response.Errors != nil {
-				if message := response.Errors[0].Message; message != "" {
-					return nil, errors.New(response.Errors[0].Message)
+			resp, err := c.DoRequest(req2)
+			if err != nil {
+				return nil, err
+			}
+
+			defer resp.Body.Close()
+
+			var response PermissionResponse
+			_ = json.NewDecoder(resp.Body).Decode(&response)
+
+			if resp.StatusCode == http.StatusOK {
+				return &response, nil
+			}
+
+			if resp.StatusCode == http.StatusForbidden {
+				if token := resp.Header.Get("x-csrf-token"); token != "" {
+					c.SetToken(token)
+					continue
 				}
+				return nil, UpdatePermissionErrors.ErrTokenInvalid
+			}
+
+			if resp.StatusCode == http.StatusUnauthorized {
+				return nil, UpdatePermissionErrors.ErrNotAuthenticated
+			}
+
+			if resp.StatusCode == http.StatusGone {
+				return nil, UpdatePermissionErrors.ErrUnsupportedAsset
+			}
+
+			if response.Errors != nil && len(response.Errors) > 0 {
+				return nil, errors.New(response.Errors[0].Message)
 			}
 
 			return nil, errors.New(resp.Status)
 		}
+
+		return nil, UpdatePermissionErrors.ErrTokenInvalid
 	}, nil
 }
