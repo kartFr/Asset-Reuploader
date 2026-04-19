@@ -19,7 +19,7 @@ type AssetRequestItem struct {
 	PlaceID                               int64  `json:"placeId"`
 	RequestID                             string `json:"requestId"`
 	ScriptInsert                          bool   `json:"scriptInsert"`
-	ServerPlaceID                         int64  `json:"serverPlaceId,omitempty"` // omit so you don't get "403 Asset is not trusted for this place"
+	ServerPlaceID                         int64  `json:"serverPlaceId,omitempty"`
 	UniverseID                            int64  `json:"universeId"`
 	Accept                                string `json:"accept"`
 	Encoding                              string `json:"encoding"`
@@ -75,9 +75,13 @@ func newBatchRequest(body []*AssetRequestItem, placeID int64) (*http.Request, er
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Set("User-Agent", "RobloxStudio/WinInet")
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Roblox-Place-Id", strconv.FormatInt(placeID, 10))
+
+	if placeID != 0 {
+		req.Header.Set("Roblox-Place-Id", strconv.FormatInt(placeID, 10))
+	}
 
 	return req, nil
 }
@@ -94,23 +98,40 @@ func NewBatchHandler(c *roblox.Client, body []*AssetRequestItem, placeID ...int6
 	}
 
 	return func() ([]*AssetLocation, error) {
-		req.AddCookie(&http.Cookie{
+		req2 := req.Clone(req.Context())
+
+		req2.AddCookie(&http.Cookie{
 			Name:  ".ROBLOSECURITY",
 			Value: c.Cookie,
 		})
 
-		resp, err := c.DoRequest(req)
+		resp, err := c.DoRequest(req2)
 		if err != nil {
-			return make([]*AssetLocation, 0), err
+			return nil, err
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode != http.StatusOK {
-			return nil, errors.New(resp.Status)
+		var locations []*AssetLocation
+		_ = json.NewDecoder(resp.Body).Decode(&locations)
+
+		if resp.StatusCode == http.StatusOK {
+			filtered := make([]*AssetLocation, 0, len(locations))
+			for _, loc := range locations {
+				if loc != nil && len(loc.Errors) == 0 {
+					filtered = append(filtered, loc)
+				}
+			}
+			return filtered, nil
 		}
 
-		var locations []*AssetLocation
-		json.NewDecoder(resp.Body).Decode(&locations)
-		return locations, nil
+		if resp.StatusCode == http.StatusGone {
+			return nil, errors.New("one or more assets are no longer accessible (410)")
+		}
+
+		if len(locations) > 0 && locations[0] != nil && len(locations[0].Errors) > 0 {
+			return nil, errors.New(locations[0].Errors[0].Message)
+		}
+
+		return nil, errors.New(resp.Status)
 	}, nil
 }
