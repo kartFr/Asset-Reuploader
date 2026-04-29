@@ -99,7 +99,7 @@ func NewUploadAnimationHandler(
 
 			return 0, errors.New(resp.Status)
 		case http.StatusUnprocessableEntity:
-			if string(body) == "Inappropriate name or description." {
+			if string(body) == "Inappropriate name or description.." {
 				req, _ = newUploadAnimationRequest(group, "[Censored]", description, data)
 				return 0, UploadAnimationErrors.ErrInappropriateName
 			}

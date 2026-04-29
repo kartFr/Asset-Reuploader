@@ -21,6 +21,9 @@ var (
 func main() {
 	console.ClearScreen()
 
+	// ---------- NEW: ask for API key if not set ----------
+	ensureAPIKey()
+
 	fmt.Println("Authenticating cookie...")
 
 	cookie, readErr := files.Read(cookieFile)
@@ -70,5 +73,32 @@ func getCookie(c *roblox.Client) {
 
 		files.Write(cookieFile, i)
 		break
+	}
+}
+
+// ---------- NEW: Open Cloud API key prompt ----------
+func ensureAPIKey() {
+	if strings.TrimSpace(config.Get("api_key")) != "" {
+		return
+	}
+
+	fmt.Println("Enter your Open Cloud API key to enable mesh/animation uploads.")
+	fmt.Println("How to get one:")
+	fmt.Println("1. Go to https://create.roblox.com/dashboard/credentials?activeTab=ApiKeysTab")
+	fmt.Println("2. Create an API key with access to 'Assets API' under the 'Experience' section.")
+	fmt.Println("3. Copy the generated key.")
+	key, err := console.Input("API key (leave blank to skip): ")
+	if err != nil {
+		fmt.Printf("Failed to read input: %v\n", err)
+		return
+	}
+	key = strings.TrimSpace(key)
+	if key != "" {
+		config.Set("api_key", key)
+		if err := config.Save(); err != nil {
+			fmt.Printf("Warning: could not save config: %v\n", err)
+		} else {
+			fmt.Println("API key saved successfully.")
+		}
 	}
 }

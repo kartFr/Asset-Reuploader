@@ -87,9 +87,9 @@ func Reupload(ctx *context.Context, r *request.Request) {
 						return id, nil
 					}
 
-					if err == ide.UploadAnimationErrors.ErrNotLoggedIn {
+					if err == ide.UploadMeshErrors.ErrNotLoggedIn {
 						clientutils.GetNewCookie(ctx, r, "cookie expired")
-					} else if err == ide.UploadAnimationErrors.ErrInappropriateName {
+					} else if err == ide.UploadMeshErrors.ErrInappropriateName { 
 						assetInfo.Name = fmt.Sprintf("(%s) [Censored]", assetInfo.Name)
 					} else {
 						switch err.(type) {

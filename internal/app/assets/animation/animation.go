@@ -27,6 +27,20 @@ import (
 
 const assetTypeID int32 = 24
 
+// ---------- NEW: backoff support for rate limiting ----------
+const animationUploadRateLimitMaxPower = 6
+
+func animationRateLimitBackoff(try int) time.Duration {
+	if try <= 0 {
+		try = 1
+	}
+	if try > animationUploadRateLimitMaxPower {
+		try = animationUploadRateLimitMaxPower
+	}
+	return time.Minute * time.Duration(1<<(try-1))
+}
+// ---------------------------------------------------------------
+
 var ErrUnauthorized = errors.New("authentication required to access asset")
 
 func MoveValueToTop[T comparable](arr *atomicarray.AtomicArray[T], value T) {
@@ -125,6 +139,14 @@ func Reupload(ctx *context.Context, r *request.Request) {
 					if err == nil {
 						return id, nil
 					}
+
+					// ---------- NEW: rate‑limit backoff ----------
+					if errors.Is(err, ide.ErrRateLimited) {
+						backoff := animationRateLimitBackoff(try)
+						time.Sleep(backoff)
+						return 0, &retry.ContinueRetry{Err: err}
+					}
+					// --------------------------------------------
 
 					switch err {
 					case ide.UploadAnimationErrors.ErrNotLoggedIn:
