@@ -20,6 +20,7 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/roblox/assetdelivery"
 	"github.com/kartFr/Asset-Reuploader/internal/roblox/develop"
 	"github.com/kartFr/Asset-Reuploader/internal/roblox/games"
+	"github.com/kartFr/Asset-Reuploader/internal/app/config"
 	"github.com/kartFr/Asset-Reuploader/internal/roblox/ide"
 	"github.com/kartFr/Asset-Reuploader/internal/shardedmap"
 	"github.com/kartFr/Asset-Reuploader/internal/taskqueue"
@@ -106,42 +107,47 @@ func Reupload(ctx *context.Context, r *request.Request) {
 			return
 		}
 
-		uploadHandler, err := ide.NewUploadAnimationHandler(client, assetInfo.Name, "", assetData, groupID)
-		if err != nil {
-			newUploadError("Failed to get upload handler", assetInfo, err)
-			return
-		}
-
 		res := <-uploadQueue.QueueTask(func() (int64, error) {
-			return retry.Do(
-				retry.NewOptions(retry.Tries(3)),
-				func(try int) (int64, error) {
-					pauseController.WaitIfPaused()
-					if try > 1 {
-						uploadQueue.Limiter.Wait()
-					}
+	return retry.Do(
+		retry.NewOptions(retry.Tries(3)),
+		func(try int) (int64, error) {
+			pauseController.WaitIfPaused()
+			if try > 1 {
+				uploadQueue.Limiter.Wait()
+			}
+			apiKey := config.Get("api_key")
+			creatorType := "User"
+			if groupID > 0 {
+				creatorType = "Group"
+			}
+			creatorID := int64(groupID)
+if creatorType == "User" {
+    creatorID = client.UserInfo.ID
+}
+id, err := ide.UploadAnimationOpenCloud(client.GetHTTPClient(), apiKey, assetInfo.Name, assetData.Bytes(), creatorType, creatorID)
+if err == nil {
+    return id, nil
+}
+switch err {
+case ide.UploadAnimationErrors.ErrInappropriateName:
+    assetInfo.Name = fmt.Sprintf("(%s) [Censored]", assetInfo.Name)
+case ide.ErrRateLimited:
+    wait := time.Minute * time.Duration(1<<(try-1))
+    if wait > 32*time.Minute {
+        wait = 32 * time.Minute
+    }
+    time.Sleep(wait)
+default:
+    switch err.(type) {
+    case *net.OpError, *net.DNSError:
+        uploadQueue.Limiter.Decrement()
+    }
+}
+return 0, &retry.ContinueRetry{Err: err}
+		},
+	)
+})
 
-					id, err := uploadHandler()
-					if err == nil {
-						return id, nil
-					}
-
-					switch err {
-					case ide.UploadAnimationErrors.ErrNotLoggedIn:
-						clientutils.GetNewCookie(ctx, r, "cookie expired")
-					case ide.UploadAnimationErrors.ErrInappropriateName:
-						assetInfo.Name = fmt.Sprintf("(%s) [Censored]", assetInfo.Name)
-					default:
-						switch err.(type) {
-						case *net.OpError, *net.DNSError:
-							uploadQueue.Limiter.Decrement()
-						}
-					}
-
-					return 0, &retry.ContinueRetry{Err: err}
-				},
-			)
-		})
 
 		if err := res.Error; err != nil {
 			assetInfo.Name = oldName

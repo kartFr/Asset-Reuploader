@@ -70,3 +70,7 @@ func (c *Client) SetToken(s string) {
 func (c *Client) DoRequest(req *http.Request) (*http.Response, error) {
 	return c.httpClient.Do(req)
 }
+
+func (c *Client) GetHTTPClient() *http.Client {
+	return c.httpClient
+}
