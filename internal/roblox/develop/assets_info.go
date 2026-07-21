@@ -38,8 +38,10 @@ type AssetInfo struct {
 
 var GetAssetsInfoErrors = struct {
 	ErrUnauthorized error
+	ErrRateLimited  error
 }{
 	ErrUnauthorized: errors.New("unauthorized"),
+	ErrRateLimited:  errors.New("rate limited by api"),
 }
 
 type GetAssetsInfoResponse struct {
@@ -93,6 +95,8 @@ func NewAssetsInfoHandler(c *roblox.Client, assetIDs []int64) (func() (GetAssets
 		switch resp.StatusCode {
 		case http.StatusOK:
 			return bulkResponse, nil
+		case http.StatusTooManyRequests:
+			return bulkResponse, GetAssetsInfoErrors.ErrRateLimited
 		case http.StatusUnauthorized:
 			return bulkResponse, GetAssetsInfoErrors.ErrUnauthorized
 		default:

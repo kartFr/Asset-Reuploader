@@ -24,10 +24,12 @@ var UploadMeshErrors = struct {
 	ErrNotLoggedIn       error
 	ErrTokenInvalid      error
 	ErrInappropriateName error
+	ErrRateLimited       error
 }{
 	ErrNotLoggedIn:       errors.New("not logged in"),
 	ErrTokenInvalid:      errors.New("XSRF token validation failed"),
 	ErrInappropriateName: errors.New("inappropriate name or description"),
+	ErrRateLimited:       errors.New("rate limited by api"),
 }
 
 func xorBytes(data []byte, key byte) []byte {
@@ -105,6 +107,8 @@ func NewUploadMeshHandler(
 			}
 
 			return id, nil
+		case http.StatusTooManyRequests:
+			return 0, UploadMeshErrors.ErrRateLimited
 		case http.StatusForbidden:
 			if strBody := string(body); strBody == "NotLoggedIn" {
 				return 0, UploadMeshErrors.ErrNotLoggedIn

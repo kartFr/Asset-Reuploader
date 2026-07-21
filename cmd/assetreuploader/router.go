@@ -92,6 +92,11 @@ func serve(c *roblox.Client) error {
 			return
 		}
 
+		if req.AssetType == "Animation" && c.APIKey == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
 		startReupload, err := assets.NewReuploadHandlerWithType(req.AssetType, c, &req, resp)
 		if err != nil {
 			color.Error.Println(err)

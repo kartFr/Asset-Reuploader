@@ -4,5 +4,6 @@
     "go.lintTool": "golangci-lint",
     "go.lintFlags": [
         "--fast"
-    ]
+    ],
+    "luau-lsp.studioPlugin.enabled": true
 }

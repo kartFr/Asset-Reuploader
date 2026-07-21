@@ -14,6 +14,7 @@ const (
 	FgGreen
 	FgYellow
 	FgBlue
+	FgOrange = 33
 )
 
 var Output = colorable.NewColorableStdout()
@@ -23,6 +24,7 @@ var (
 	Warn    = New(FgYellow)
 	Success = New(FgGreen)
 	Info    = New(FgBlue)
+	Orange  = New(FgOrange)
 )
 
 var reset = New(0)

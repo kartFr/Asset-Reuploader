@@ -41,6 +41,9 @@ func GetAssetsInfoInChunks(ctx *context.Context, r *request.Request) []chan Asse
 
 					if err == develop.GetAssetsInfoErrors.ErrUnauthorized {
 						clientutils.GetNewCookie(ctx, r, "cookie expired")
+					} else if err == develop.GetAssetsInfoErrors.ErrRateLimited {
+						time.Sleep(time.Duration(try+1) * time.Second)
+						queue.Limiter.Decrement()
 					} else {
 						switch err.(type) {
 						case *net.OpError, *net.DNSError:

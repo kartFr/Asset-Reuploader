@@ -12,6 +12,7 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/assetutils"
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/clientutils"
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/uploaderror"
+	"github.com/kartFr/Asset-Reuploader/internal/app/config"
 	"github.com/kartFr/Asset-Reuploader/internal/app/context"
 	"github.com/kartFr/Asset-Reuploader/internal/app/request"
 	"github.com/kartFr/Asset-Reuploader/internal/app/response"
@@ -82,9 +83,11 @@ func Reupload(ctx *context.Context, r *request.Request) {
 	creatorPlaceMap := shardedmap.New[*atomicarray.AtomicArray[int64]]()
 	creatorMutexMap := shardedmap.New[*sync.RWMutex]()
 
-	uploadQueue := taskqueue.New[int64](time.Minute, 120)
+	uploadWindow, uploadLimit := config.GetUploadQueueConfig()
+	uploadQueue := taskqueue.New[int64](uploadWindow, uploadLimit)
 	permissionQueue := taskqueue.New[*assets.PermissionResponse](time.Minute, 60)
 	permissionRequest := assetutils.NewPermissionBodyFromIds([]int64{r.UniverseID})
+	batchSemaphore := make(chan struct{}, 5)
 
 	logger.Println("Reuploading sounds...")
 
@@ -286,6 +289,9 @@ func Reupload(ctx *context.Context, r *request.Request) {
 
 				locations, err := handler()
 				if err != nil {
+					if err == assetdelivery.ErrRateLimited {
+						time.Sleep(time.Duration(try+1) * time.Second)
+					}
 					return locations, &retry.ContinueRetry{Err: err}
 				}
 
@@ -427,7 +433,11 @@ func Reupload(ctx *context.Context, r *request.Request) {
 			uploadWG.Add(len(creatorAssetMap))
 
 			for creatorID, creatorAssets := range creatorAssetMap {
-				go batchUpload(&uploadWG, creatorID, creatorType, creatorAssets)
+				batchSemaphore <- struct{}{}
+				go func(creatorID int64, creatorType string, creatorAssets []*develop.AssetInfo) {
+					defer func() { <-batchSemaphore }()
+					batchUpload(&uploadWG, creatorID, creatorType, creatorAssets)
+				}(creatorID, creatorType, creatorAssets)
 			}
 		}
 		uploadWG.Wait()

@@ -12,6 +12,7 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/assetutils"
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/clientutils"
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/uploaderror"
+	"github.com/kartFr/Asset-Reuploader/internal/app/config"
 	"github.com/kartFr/Asset-Reuploader/internal/app/context"
 	"github.com/kartFr/Asset-Reuploader/internal/app/request"
 	"github.com/kartFr/Asset-Reuploader/internal/app/response"
@@ -41,7 +42,8 @@ func Reupload(ctx *context.Context, r *request.Request) {
 	}
 
 	filter := assetutils.NewFilter(ctx, r, assetTypeID)
-	uploadQueue := taskqueue.New[int64](time.Minute, 3000)
+	uploadWindow, uploadLimit := config.GetUploadQueueConfig()
+	uploadQueue := taskqueue.New[int64](uploadWindow, uploadLimit)
 
 	logger.Println("Reuploading meshes...")
 
@@ -87,9 +89,12 @@ func Reupload(ctx *context.Context, r *request.Request) {
 						return id, nil
 					}
 
-					if err == ide.UploadAnimationErrors.ErrNotLoggedIn {
+					if err == ide.UploadMeshErrors.ErrNotLoggedIn {
 						clientutils.GetNewCookie(ctx, r, "cookie expired")
-					} else if err == ide.UploadAnimationErrors.ErrInappropriateName {
+					} else if err == ide.UploadMeshErrors.ErrRateLimited {
+						time.Sleep(time.Duration(try+1) * time.Second)
+						uploadQueue.Limiter.Decrement()
+					} else if err == ide.UploadMeshErrors.ErrInappropriateName {
 						assetInfo.Name = fmt.Sprintf("(%s) [Censored]", assetInfo.Name)
 					} else {
 						switch err.(type) {

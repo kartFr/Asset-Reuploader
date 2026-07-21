@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"slices"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -12,15 +15,17 @@ import (
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/assetutils"
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/clientutils"
 	"github.com/kartFr/Asset-Reuploader/internal/app/assets/shared/uploaderror"
+	"github.com/kartFr/Asset-Reuploader/internal/app/config"
 	"github.com/kartFr/Asset-Reuploader/internal/app/context"
 	"github.com/kartFr/Asset-Reuploader/internal/app/request"
 	"github.com/kartFr/Asset-Reuploader/internal/app/response"
 	"github.com/kartFr/Asset-Reuploader/internal/atomicarray"
+	"github.com/kartFr/Asset-Reuploader/internal/color"
 	"github.com/kartFr/Asset-Reuploader/internal/retry"
 	"github.com/kartFr/Asset-Reuploader/internal/roblox/assetdelivery"
 	"github.com/kartFr/Asset-Reuploader/internal/roblox/develop"
 	"github.com/kartFr/Asset-Reuploader/internal/roblox/games"
-	"github.com/kartFr/Asset-Reuploader/internal/roblox/ide"
+	"github.com/kartFr/Asset-Reuploader/internal/roblox/opencloud"
 	"github.com/kartFr/Asset-Reuploader/internal/shardedmap"
 	"github.com/kartFr/Asset-Reuploader/internal/taskqueue"
 )
@@ -53,7 +58,13 @@ func MoveValueToTop[T comparable](arr *atomicarray.AtomicArray[T], value T) {
 	})
 }
 
+const maxRetryDepth = 3
+
 func Reupload(ctx *context.Context, r *request.Request) {
+	reuploadWithRetry(ctx, r, 0)
+}
+
+func reuploadWithRetry(ctx *context.Context, r *request.Request, retryDepth int) {
 	client := ctx.Client
 	logger := ctx.Logger
 	pauseController := ctx.PauseController
@@ -78,9 +89,14 @@ func Reupload(ctx *context.Context, r *request.Request) {
 	creatorPlaceMap := shardedmap.New[*atomicarray.AtomicArray[int64]]()
 	creatorMutexMap := shardedmap.New[*sync.RWMutex]()
 
-	uploadQueue := taskqueue.New[int64](time.Minute, 3000)                  // wouldnt it be smarter to build in the queue with the api library... YES... but we dont do fixes aroudn here we just add on to the slow degredation of the code base
-	groupGameQueue := taskqueue.New[*games.GamesResponse](time.Second*5, 5) // there doesnt seem to be a limit in minutes on this api endpoint... and its not public and i dont feel like testing the limits sooo hopefully this works
-	userGameQueue := taskqueue.New[*games.GamesResponse](time.Second*5, 5)  // I dont even think there is a limit on this like group games but we can be safe... yes i like to spam elipses
+	uploadWindow, uploadLimit := config.GetUploadQueueConfig()
+	groupGameWindow, groupGameLimit := config.GetGroupGameQueueConfig()
+	userGameWindow, userGameLimit := config.GetUserGameQueueConfig()
+
+	uploadQueue := taskqueue.New[int64](uploadWindow, uploadLimit)
+	groupGameQueue := taskqueue.New[*games.GamesResponse](groupGameWindow, groupGameLimit)
+	userGameQueue := taskqueue.New[*games.GamesResponse](userGameWindow, userGameLimit)
+	batchSemaphore := make(chan struct{}, 5)
 
 	logger.Println("Reuploading animations...")
 
@@ -106,7 +122,7 @@ func Reupload(ctx *context.Context, r *request.Request) {
 			return
 		}
 
-		uploadHandler, err := ide.NewUploadAnimationHandler(client, assetInfo.Name, "", assetData, groupID)
+		uploadHandler, err := opencloud.NewUploadAnimationHandler(client, assetInfo.Name, "", assetData, groupID)
 		if err != nil {
 			newUploadError("Failed to get upload handler", assetInfo, err)
 			return
@@ -127,9 +143,12 @@ func Reupload(ctx *context.Context, r *request.Request) {
 					}
 
 					switch err {
-					case ide.UploadAnimationErrors.ErrNotLoggedIn:
-						clientutils.GetNewCookie(ctx, r, "cookie expired")
-					case ide.UploadAnimationErrors.ErrInappropriateName:
+					case opencloud.UploadAnimationErrors.ErrNotAuthenticated, opencloud.UploadAnimationErrors.ErrInvalidAPIKey:
+						clientutils.GetNewAPIKey(ctx, "api key invalid or expired")
+					case opencloud.UploadAnimationErrors.ErrRateLimited:
+						time.Sleep(time.Duration(try+1) * time.Second)
+						uploadQueue.Limiter.Decrement()
+					case opencloud.UploadAnimationErrors.ErrInappropriateName:
 						assetInfo.Name = fmt.Sprintf("(%s) [Censored]", assetInfo.Name)
 					default:
 						switch err.(type) {
@@ -232,6 +251,9 @@ func Reupload(ctx *context.Context, r *request.Request) {
 
 				locations, err := handler()
 				if err != nil {
+					if err == assetdelivery.ErrRateLimited {
+						time.Sleep(time.Duration(try+1) * time.Second)
+					}
 					return locations, &retry.ContinueRetry{Err: err}
 				}
 
@@ -354,10 +376,34 @@ func Reupload(ctx *context.Context, r *request.Request) {
 			uploadWG.Add(len(creatorAssetMap))
 
 			for creatorID, creatorAssets := range creatorAssetMap {
-				go batchUpload(&uploadWG, creatorID, creatorType, creatorAssets)
+				batchSemaphore <- struct{}{}
+				go func(creatorID int64, creatorType string, creatorAssets []*develop.AssetInfo) {
+					defer func() { <-batchSemaphore }()
+					batchUpload(&uploadWG, creatorID, creatorType, creatorAssets)
+				}(creatorID, creatorType, creatorAssets)
 			}
 		}
 		uploadWG.Wait()
+	}
+
+	var failedIDs []int64
+	var failedIDsMutex sync.Mutex
+
+	addFailedID := func(id int64) {
+		failedIDsMutex.Lock()
+		failedIDs = append(failedIDs, id)
+		failedIDsMutex.Unlock()
+	}
+
+	origNewUploadError := newUploadError
+	newUploadError = func(m string, assetInfo *develop.AssetInfo, err any) {
+		addFailedID(assetInfo.ID)
+		origNewUploadError(m, assetInfo, err)
+	}
+
+	origNewBatchError := newBatchError
+	newBatchError = func(amt int, m string, err any) {
+		origNewBatchError(amt, m, err)
 	}
 
 	var wg sync.WaitGroup
@@ -375,4 +421,37 @@ func Reupload(ctx *context.Context, r *request.Request) {
 		go batchProcess(&wg, <-task, batchSize)
 	}
 	wg.Wait()
+
+	if len(failedIDs) == 0 {
+		return
+	}
+
+	if retryDepth >= maxRetryDepth {
+		color.Error.Println(fmt.Sprintf("%d animation(s) still failed after %d retries. Giving up.", len(failedIDs), maxRetryDepth))
+		os.Remove("failed_animations.txt")
+		return
+	}
+
+	color.Warn.Println(fmt.Sprintf("%d animation(s) failed, retrying (attempt %d/%d)...", len(failedIDs), retryDepth+1, maxRetryDepth))
+
+	failedIDsFile := "failed_animations.txt"
+	strIDs := make([]string, len(failedIDs))
+	for i, id := range failedIDs {
+		strIDs[i] = strconv.FormatInt(id, 10)
+	}
+	os.WriteFile(failedIDsFile, []byte(strings.Join(strIDs, "\n")), 0644)
+
+	retryRequest := &request.Request{
+		UniverseID:      r.UniverseID,
+		PlaceID:         r.PlaceID,
+		CreatorID:       r.CreatorID,
+		IDs:             failedIDs,
+		DefaultPlaceIDs: r.DefaultPlaceIDs,
+		IsGroup:         r.IsGroup,
+	}
+
+	reuploadWithRetry(ctx, retryRequest, retryDepth+1)
+
+	os.Remove(failedIDsFile)
+	color.Success.Println("Failed animation retry complete.")
 }

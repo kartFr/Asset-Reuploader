@@ -10,8 +10,9 @@ import (
 var (
 	config        = make(map[string]string, 0)
 	defaultConfig = map[string]string{
-		"port":        "38073",
-		"cookie_file": "cookie.txt",
+		"port":         "38073",
+		"cookie_file":  "cookie.txt",
+		"api_key_file": "api_key.txt",
 	}
 )
 

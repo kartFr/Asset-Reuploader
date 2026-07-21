@@ -11,6 +11,7 @@ import (
 )
 
 var ErrBodyTooLarge = errors.New("batch request body is too large")
+var ErrRateLimited = errors.New("rate limited by api")
 
 type AssetRequestItem struct {
 	AssetName                             string `json:"assetName"`
@@ -104,6 +105,10 @@ func NewBatchHandler(c *roblox.Client, body []*AssetRequestItem, placeID ...int6
 			return make([]*AssetLocation, 0), err
 		}
 		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, ErrRateLimited
+		}
 
 		if resp.StatusCode != http.StatusOK {
 			return nil, errors.New(resp.Status)

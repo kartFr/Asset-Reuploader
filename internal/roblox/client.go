@@ -16,6 +16,7 @@ var (
 
 type Client struct {
 	Cookie   string
+	APIKey   string
 	UserInfo UserInfo
 
 	httpClient *http.Client
@@ -67,6 +68,17 @@ func (c *Client) SetToken(s string) {
 	c.tokenMutex.Unlock()
 }
 
+func (c *Client) SetAPIKey(apiKey string) {
+	c.APIKey = strings.TrimSpace(apiKey)
+}
+
 func (c *Client) DoRequest(req *http.Request) (*http.Response, error) {
+	return c.httpClient.Do(req)
+}
+
+func (c *Client) DoAPIKeyRequest(req *http.Request) (*http.Response, error) {
+	if c.APIKey != "" {
+		req.Header.Set("x-api-key", c.APIKey)
+	}
 	return c.httpClient.Do(req)
 }

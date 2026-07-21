@@ -15,6 +15,7 @@ import (
 
 var (
 	cookieFile = config.Get("cookie_file")
+	apiKeyFile = config.Get("api_key_file")
 	port       = config.Get("port")
 )
 
@@ -45,7 +46,24 @@ func main() {
 		color.Error.Println("Failed to save cookie: ", err)
 	}
 
-	fmt.Println("localhost started on port " + port + ". Waiting to start reuploading.")
+	apiKey, _ := files.Read(apiKeyFile)
+	apiKey = strings.TrimSpace(apiKey)
+	if apiKey != "" {
+		c.SetAPIKey(apiKey)
+	}
+
+	console.ClearScreen()
+	if apiKey == "" {
+		getAPIKey(c)
+	}
+
+	if err := files.Write(apiKeyFile, c.APIKey); err != nil {
+		color.Error.Println("Failed to save api key: ", err)
+	}
+
+	color.Success.Println("localhost = true (port " + port + ")")
+	fmt.Println("Failed uploads will be automatically retried.")
+
 	if err := serve(c); err != nil {
 		log.Fatal(err)
 	}
@@ -69,6 +87,29 @@ func getCookie(c *roblox.Client) {
 		}
 
 		files.Write(cookieFile, i)
+		break
+	}
+}
+
+func getAPIKey(c *roblox.Client) {
+	for {
+		fmt.Println("An API key is required to reupload animations.")
+		fmt.Println("Create one at https://create.roblox.com/dashboard/credentials")
+		fmt.Println("Make sure to add 'assets' with Read and Write permissions.")
+
+		i, err := console.Input("API Key: ")
+		console.ClearScreen()
+		if err != nil {
+			color.Error.Println(err)
+			continue
+		}
+
+		if i == "" {
+			color.Error.Println("API key cannot be empty")
+			continue
+		}
+
+		c.SetAPIKey(i)
 		break
 	}
 }
