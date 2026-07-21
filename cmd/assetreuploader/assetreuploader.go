@@ -61,7 +61,6 @@ func main() {
 		color.Error.Println("Failed to save api key: ", err)
 	}
 
-	color.Orange.Println("Asset-Reuploader made by Kartfr, Modified by Klinti Karaj (funnyfreak228)")
 	color.Success.Println("localhost = true (port " + port + ")")
 	fmt.Println("Failed uploads will be automatically retried.")
 
